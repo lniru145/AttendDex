@@ -1,0 +1,42 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.attenddex'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'app.attenddex'
+        minSdk 23
+        targetSdk 35
+        versionCode 3
+        versionName '1.1'
+    }
+
+    sourceSets {
+        main.assets.srcDirs = ["$buildDir/generated/attenddex-assets"]
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
+    }
+}
+
+tasks.register('copyAttendDexAssets', Sync) {
+    def webAppRoot = providers.gradleProperty('attenddexWebRoot')
+            .orElse(providers.environmentVariable('ATTENDDEX_WEB_ROOT'))
+            .orElse(rootProject.projectDir.parentFile.absolutePath)
+            .get()
+    from(webAppRoot) {
+        include 'index.html', 'styles.css', 'app.js', 'assets/**'
+        exclude '**/desktop.ini'
+    }
+    into("$buildDir/generated/attenddex-assets/www")
+}
+
+tasks.named('preBuild').configure {
+    dependsOn tasks.named('copyAttendDexAssets')
+}
